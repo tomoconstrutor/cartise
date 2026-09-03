@@ -1,0 +1,6 @@
+node_modules/
+dist/
+implementation-*.png
+design-qa.md
+*.log
+.DS_Store
