@@ -1,4 +1,4 @@
-export const FORM_ENDPOINT = "https://formsubmit.co/ajax/tomoconstrutor@gmail.com";
+export const FORM_ENDPOINT = "https://formsubmit.co/ajax/hello@cartise.pt";
 
 const subjects = {
   proposal: {
