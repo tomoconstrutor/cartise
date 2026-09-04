@@ -27,7 +27,7 @@ test("creates a differentiated campaign payload", () => {
   try {
     const payload = createLeadPayload(form, "proposal", "pt");
     assert.equal(payload.get("_subject"), "Cartise — Pedido de campanha");
-    assert.equal(payload.get("_cc"), "tomas.ferreira@cartise.pt");
+    assert.equal(payload.get("_cc"), null);
     assert.equal(payload.get("request_type"), "campaign");
     assert.equal(payload.get("language"), "pt");
     assert.equal(payload.get("email"), "test@example.com");
