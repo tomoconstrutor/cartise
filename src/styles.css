@@ -272,3 +272,19 @@ textarea { resize:vertical; }
 .city-card:last-child > span:last-child { margin-left:auto; }
 @media(max-width:800px) { .city-grid { grid-template-columns:1fr; } }
 @media(max-width:480px) { .city-card:last-child { flex-wrap:wrap; gap:12px; } .city-card:last-child > span:last-child { width:100%; margin:0; } }
+
+/* Keep mobile controls readable and comfortable to tap. */
+@media(max-width:800px) {
+  input,select,textarea { font-size:16px; }
+  .language-switch a { min-width:44px; }
+  .footer a:not(.brand-mark) { display:flex; align-items:center; min-height:44px; }
+  .contact-layout > .lead-form-wrap { order:-1; }
+  .lead-modal { overscroll-behavior:contain; }
+}
+@media(max-width:360px) {
+  .header { display:grid; grid-template-columns:1fr auto auto; }
+  .header-actions { display:contents; }
+  .language-switch { grid-column:2; grid-row:1; }
+  .menu-toggle { grid-column:3; grid-row:1; }
+  .header-cta { grid-column:1 / -1; grid-row:2; min-height:44px; }
+}

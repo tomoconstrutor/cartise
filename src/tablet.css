@@ -77,3 +77,9 @@
   .tablet-copy > .brands-demo-link { order:9; margin-top:4px; }
   .tablet-copy > .small-copy { order:10; margin:0; }
 }
+
+@media(max-width:800px) {
+  .tablet-copy > .brief-details { order:6; }
+  .tablet-canvas,.tablet-home .tablet-canvas { aspect-ratio:1.75; }
+  .tablet-stage-label { gap:12px; letter-spacing:.08em; }
+}
