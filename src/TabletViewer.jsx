@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AdExamples, useAdCycle } from './AdExamples.jsx';
+import { pageLink } from './routes.js';
+import { track } from './analytics.js';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -36,15 +39,31 @@ function disposeModel(model) {
 }
 
 // Reusable viewer: media is { url, type: 'image' | 'video' }. Local files stay in the browser.
-export function TabletViewer({ media, resetPosition = 0, paused = false, onStatus, onVideoState = ignoreVideoState, controlsRef }) {
+export function TabletViewer({ media, resetPosition = 0, paused = false, onStatus, onVideoState = ignoreVideoState, controlsRef, lang = 'pt' }) {
   const host = useRef(null);
   const runtime = useRef(null);
   const [ready, setReady] = useState(false);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
+  const report = useCallback(message => {
+    const messages = {
+      'O navegador não conseguiu iniciar o 3D. Experimente outro navegador.': '3D is unavailable in this browser. The image preview remains available.',
+      'O modelo não contém o ecrã esperado.': 'The expected screen is missing from the model.',
+      'Não foi possível carregar o tablet. Atualize a página para tentar novamente.': 'The tablet could not load. Refresh to retry.',
+      'A preparar o vídeo…': 'Preparing video…',
+      'Prima Reproduzir para iniciar o vídeo.': 'Press Play to start the video.',
+      'Este vídeo não pôde ser aberto. Experimente MP4 (H.264) ou WebM.': 'This video could not open. Try MP4 (H.264) or WebM.',
+      'A preparar a imagem…': 'Preparing image…',
+      'Não foi possível abrir esta imagem. Experimente JPG, PNG ou WebP.': 'This image could not open. Try JPG, PNG or WebP.',
+      'Não foi possível iniciar o vídeo.': 'The video could not start.',
+    };
+    onStatus(lang === 'en' ? (messages[message] || message) : message);
+  }, [lang, onStatus]);
 
   useEffect(() => {
     let renderer;
     try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
-    catch { onStatus('O navegador não conseguiu iniciar o 3D. Experimente outro navegador.'); return; }
+    catch { report('O navegador não conseguiu iniciar o 3D. Experimente outro navegador.'); return; }
     const container = host.current;
     let disposed = false;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -94,20 +113,38 @@ export function TabletViewer({ media, resetPosition = 0, paused = false, onStatu
     new GLTFLoader().load('/models/cartise-tablet.glb', (gltf) => {
       if (disposed) { disposeModel(gltf.scene); return; }
       model = gltf.scene;
-      const bounds = new THREE.Box3().setFromObject(model);
-      corners = [bounds.min.x, bounds.max.x].flatMap(x =>
-        [bounds.min.y, bounds.max.y].flatMap(y =>
-          [bounds.min.z, bounds.max.z].map(z => new THREE.Vector3(x, y, z))));
+      // Match the illustrative tablet to the artwork, preserving the full image.
+      const originalHeight = model.scale.y;
+      runtime.current.fitMedia = (ratio) => {
+        model.scale.y = originalHeight * SCREEN_RATIO / ratio;
+        const bounds = new THREE.Box3().setFromObject(model);
+        corners = [bounds.min.x, bounds.max.x].flatMap(x =>
+          [bounds.min.y, bounds.max.y].flatMap(y =>
+            [bounds.min.z, bounds.max.z].map(z => new THREE.Vector3(x, y, z))));
+        fitTablet();
+      };
+      runtime.current.fitMedia(SCREEN_RATIO);
       const screen = model.getObjectByName('Screen');
-      if (!screen) { disposeModel(model); onStatus('O modelo não contém o ecrã esperado.'); return; }
+      if (!screen) { disposeModel(model); report('O modelo não contém o ecrã esperado.'); return; }
       screen.material.dispose();
       screen.material = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
       scene.add(model); runtime.current.screen = screen;
       fitTablet(); renderer.render(scene, camera);
-      setReady(true); onStatus('');
-    }, undefined, () => { if (!disposed) onStatus('Não foi possível carregar o tablet. Atualize a página para tentar novamente.'); });
+      setReady(true); report('');
+    }, undefined, () => { if (!disposed) report('Não foi possível carregar o tablet. Atualize a página para tentar novamente.'); });
     let visible = true;
-    const visibility = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; });
+    function syncVideo() {
+      const video = runtime.current?.video;
+      if (!video) return;
+      if (!visible || document.hidden || pausedRef.current) video.pause();
+      else if (video.readyState >= 2) video.play().catch(() => {});
+    }
+    const visibility = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (runtime.current) runtime.current.visible = visible;
+      syncVideo();
+    });
+    document.addEventListener('visibilitychange', syncVideo);
     visibility.observe(container);
     renderer.setAnimationLoop(() => {
       if (visible && !document.hidden) { controls.update(); fitTablet(); renderer.render(scene, camera); }
@@ -116,10 +153,11 @@ export function TabletViewer({ media, resetPosition = 0, paused = false, onStatu
       disposed = true; setReady(false); runtime.current = null;
       if (controlsRef) controlsRef.current = null;
       renderer.setAnimationLoop(null); resize.disconnect(); visibility.disconnect();
+      document.removeEventListener('visibilitychange', syncVideo);
       controls.dispose(); disposeModel(model); environment.dispose(); renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [onStatus, controlsRef]);
+  }, [report, controlsRef]);
 
   useEffect(() => {
     const rt = runtime.current;
@@ -130,51 +168,48 @@ export function TabletViewer({ media, resetPosition = 0, paused = false, onStatu
     function apply(next, width, height) {
       if (cancelled) { next.dispose(); return; }
       texture = next; texture.flipY = false; texture.colorSpace = THREE.SRGBColorSpace;
-      // Fill the display without stretching; only the excess edges are cropped.
-      const ratio = width / height;
-      if (ratio > SCREEN_RATIO) { texture.repeat.x = SCREEN_RATIO / ratio; texture.offset.x = (1 - texture.repeat.x) / 2; }
-      else { texture.repeat.y = ratio / SCREEN_RATIO; texture.offset.y = (1 - texture.repeat.y) / 2; }
+      rt.fitMedia(width / height);
       rt.screen.material.map = texture; rt.screen.material.needsUpdate = true;
       rt.renderer.render(rt.scene, rt.camera);
-      onStatus('');
+      report('');
     }
     if (!media) apply(exampleTexture(), 1560, 1000);
     else if (media.type === 'video') {
-      onStatus('A preparar o vídeo…');
+      report('A preparar o vídeo…');
       video = document.createElement('video'); video.crossOrigin = 'anonymous';
       video.muted = true; video.loop = true; video.playsInline = true; video.preload = 'auto';
       video.onloadeddata = () => {
         if (cancelled) return;
         apply(new THREE.VideoTexture(video), video.videoWidth, video.videoHeight);
-        video.play().catch(() => { if (!cancelled) { onVideoState(true); onStatus('Prima Reproduzir para iniciar o vídeo.'); } });
+        if (!pausedRef.current && !document.hidden && rt.visible !== false) video.play().catch(() => { if (!cancelled) { onVideoState(true); report('Prima Reproduzir para iniciar o vídeo.'); } });
       };
-      video.onerror = () => { if (!cancelled) onStatus('Este vídeo não pôde ser aberto. Experimente MP4 (H.264) ou WebM.'); };
+      video.onerror = () => { if (!cancelled) report('Este vídeo não pôde ser aberto. Experimente MP4 (H.264) ou WebM.'); };
       rt.video = video; video.src = media.url; video.load();
     } else {
-      onStatus('A preparar a imagem…');
+      report('A preparar a imagem…');
       new THREE.TextureLoader().load(media.url, (next) => apply(next, next.image.width, next.image.height), undefined,
-        () => { if (!cancelled) onStatus('Não foi possível abrir esta imagem. Experimente JPG, PNG ou WebP.'); });
+        () => { if (!cancelled) report('Não foi possível abrir esta imagem. Experimente JPG, PNG ou WebP.'); });
     }
     return () => {
       cancelled = true;
       if (video) { video.onloadeddata = null; video.onerror = null; video.pause(); video.removeAttribute('src'); video.load(); }
       rt.video = null; rt.screen.material.map = null; rt.screen.material.needsUpdate = true; texture?.dispose();
     };
-  }, [ready, media, onStatus, onVideoState]);
+  }, [ready, media, report, onVideoState]);
 
   useEffect(() => {
     const video = runtime.current?.video;
     if (!video) return;
-    if (paused) video.pause();
-    else if (video.readyState >= 2) video.play().then(() => onStatus('')).catch(() => { onVideoState(true); onStatus('Não foi possível iniciar o vídeo.'); });
-  }, [paused, ready, onStatus, onVideoState]);
+    if (paused || document.hidden || runtime.current?.visible === false) video.pause();
+    else if (video.readyState >= 2) video.play().then(() => report('')).catch(() => { onVideoState(true); report('Não foi possível iniciar o vídeo.'); });
+  }, [paused, ready, report, onVideoState]);
 
   useEffect(() => {
     const rt = runtime.current;
     if (!rt) return;
     rt.controls.reset();
   }, [resetPosition, ready]);
-  return <div ref={host} className="tablet-canvas" role="img" aria-label="Tablet 3D Cartise. Arraste com o dedo ou o rato para rodar livremente em todas as direções." />;
+  return <div ref={host} className="tablet-canvas" role="img" aria-label={lang === 'en' ? 'Cartise 3D tablet. Drag horizontally or vertically; use the adjacent arrow control with a keyboard.' : 'Tablet 3D Cartise. Arraste na horizontal ou vertical; use o controlo de setas adjacente com o teclado.'}>{!ready && <img className="viewer-poster" src={media?.poster || '/ads/cafe.jpg'} alt={lang === 'en' ? 'Fictional ad preview' : 'Pré-visualização de anúncio fictício'} />}</div>;
 }
 
 function RotationPad({ controlsRef, lang = 'pt' }) {
@@ -231,47 +266,63 @@ function RotationPad({ controlsRef, lang = 'pt' }) {
   </button>;
 }
 
-export function TabletShowcase({ lang = 'pt' }) {
+export function TabletShowcase({ lang = 'pt', media, paused = false }) {
   const controlsRef = useRef(null);
   const [status, setStatus] = useState('');
   const [resetPosition, setResetPosition] = useState(0);
   const en = lang === 'en';
   return <div className="tablet-stage tablet-home">
     <div className="tablet-stage-label"><span>CARTISE</span><span>{en ? 'YOUR CAMPAIGN, HERE' : 'A SUA CAMPANHA, AQUI'}</span></div>
-    <TabletViewer controlsRef={controlsRef} resetPosition={resetPosition} onStatus={setStatus} />
+    <TabletViewer lang={lang} media={media} paused={paused} controlsRef={controlsRef} resetPosition={resetPosition} onStatus={setStatus} />
     <div className="tablet-status" role="status">{status}</div>
-    <div className="tablet-stage-footer"><span>{en ? 'Drag the tablet or the ball' : 'Arraste o tablet ou a bolinha'}</span><div className="tablet-control-group"><RotationPad controlsRef={controlsRef} lang={lang} /><div className="tablet-views">
-      <button onClick={() => setResetPosition((value) => value + 1)}>{en ? 'Reset position' : 'Repor posição'}</button>
-    </div></div></div>
+    <div className="tablet-stage-footer"><span>{en ? 'Drag to rotate' : 'Arraste para rodar'}</span><div className="tablet-control-group"><RotationPad controlsRef={controlsRef} lang={lang} /><div className="tablet-views"><button onClick={() => setResetPosition(value => value + 1)}>{en ? 'Reset position' : 'Repor posição'}</button></div></div></div>
   </div>;
 }
 
-export default function TabletDemo() {
+export default function TabletDemo({ lang = 'pt' }) {
+  const en = lang === 'en';
   const controlsRef = useRef(null);
   const [media, setMedia] = useState(null);
+  const cycle = useAdCycle('tablet-preview', !media);
   const [resetPosition, setResetPosition] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [status, setStatus] = useState('A carregar o tablet…');
+  const [status, setStatus] = useState('');
+  const [fileError, setFileError] = useState('');
   const input = useRef(null);
   useEffect(() => () => { if (media?.url) URL.revokeObjectURL(media.url); }, [media]);
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get('example');
+    const ids = ['cafe', 'viagem', 'evento', 'comida', 'cultura', 'bemestar'];
+    if (ids.includes(id)) cycle.select(ids.indexOf(id));
+  }, []);
   function chooseFile(event) {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) { setStatus('Escolha uma imagem ou um vídeo.'); return; }
-    setPaused(false); setMedia({ url: URL.createObjectURL(file), type: file.type.startsWith('video/') ? 'video' : 'image', name: file.name });
+    if (!['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'].includes(file.type)) {
+      setFileError(en ? 'Choose JPG, PNG, WebP, MP4 or WebM.' : 'Escolha JPG, PNG, WebP, MP4 ou WebM.'); event.target.value = ''; return;
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      setFileError(en ? 'The local studio accepts files up to 100 MB.' : 'O estúdio local aceita ficheiros até 100 MB.'); event.target.value = ''; return;
+    }
+    setFileError(''); setPaused(false);
+    setMedia({ url: URL.createObjectURL(file), type: file.type.startsWith('video/') ? 'video' : 'image', name: file.name });
+    track('demo_file_preview', { example: file.type.startsWith('video/') ? 'video' : 'image' });
   }
-  return <main className="tablet-demo">
-    <header className="tablet-header"><a className="brand-mark" href="/">CARTISE</a><span>ESTÚDIO · 01</span><a href="/models/cartise-tablet.glb" download>Descarregar modelo ↗</a></header>
+  return <div className="tablet-demo">
     <div className="tablet-layout">
-      <section className="tablet-copy"><p className="eyebrow">A sua próxima campanha</p><h1>Veja a sua marca.<br /><span>Dentro da viagem.</span></h1><p>Experimente uma imagem ou um vídeo no nosso tablet. Rode-o e descubra cada detalhe.</p>
-        <button className="solid-button" onClick={() => input.current.click()}>Experimentar imagem ou vídeo <span>↗</span></button>
-        <input ref={input} type="file" accept="image/*,video/*" onChange={chooseFile} hidden />
-        <p className="tablet-note">O ficheiro fica apenas no seu navegador. O conteúdo preenche o ecrã, com recorte das margens quando necessário.</p>
-        {media && <div className="tablet-file"><span>{media.name}</span><button onClick={() => { setMedia(null); setPaused(false); input.current.value = ''; }}>Repor exemplo</button></div>}
-        {media?.type === 'video' && <button className="tablet-play" onClick={() => setPaused(!paused)}>{paused ? 'Reproduzir' : 'Pausar'} vídeo · sem som</button>}
+      <section className="tablet-copy"><p className="eyebrow">{en ? 'Campaign studio' : 'Estúdio de campanha'}</p><h1>{en ? 'Your brand.' : 'A sua marca.'}<br /><span>{en ? 'Inside the journey.' : 'Dentro da viagem.'}</span></h1><p>{en ? 'Try an image or video on the tablet. Drag to explore the format.' : 'Experimente uma imagem ou um vídeo no tablet. Arraste para explorar o formato.'}</p>
+        <AdExamples disabled={!!media} cycle={{ ...cycle, select: index => { setMedia(null); setPaused(false); cycle.select(index); if (input.current) input.current.value = ''; } }} lang={lang} />
+        <button className="solid-button" onClick={() => input.current.click()}>{en ? 'Try my image or video' : 'Experimentar a minha imagem ou vídeo'} <span>↗</span></button>
+        <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" onChange={chooseFile} hidden />
+        <details className="brief-details"><summary>{en ? 'Studio file specifications' : 'Ficheiros aceites no estúdio'}</summary><p className="small-copy">{en ? 'Images: JPG, PNG or WebP. Videos: MP4 or WebM, depending on browser support, played without sound. Up to 100 MB per file. The preview adapts to the file proportions. Confirm campaign delivery specifications before preparing final files.' : 'Imagens: JPG, PNG ou WebP. Vídeos: MP4 ou WebM, conforme o navegador, reproduzidos sem som. Até 100 MB por ficheiro. A pré-visualização adapta-se à proporção do ficheiro. Confirme a ficha técnica da campanha antes de preparar os materiais finais.'}</p></details><p className="tablet-note">{en ? 'Your file stays in this browser (up to 100 MB). The tablet adapts to your file’s proportions without cropping. Demo duration and formats do not define campaign terms.' : 'O ficheiro fica neste navegador (até 100 MB). O tablet adapta-se às proporções do ficheiro, sem recortar. Duração e formatos da demo não definem as condições da campanha.'}</p>
+        {fileError && <p className="form-error" role="alert">{fileError}</p>}
+        {media && <div className="tablet-file"><span>{media.name}</span><button onClick={() => { setMedia(null); setPaused(false); input.current.value = ''; }}>{en ? 'Restore examples' : 'Repor exemplos'}</button></div>}
+        {media?.type === 'video' && <button className="tablet-play" onClick={() => setPaused(!paused)}>{paused ? (en ? 'Play' : 'Reproduzir') : (en ? 'Pause' : 'Pausar')} {en ? 'video · muted' : 'vídeo · sem som'}</button>}
+        <a className="brands-demo-link" data-track="proposal_from_studio" href={`${pageLink('contact', lang)}?example=${media ? media.type : cycle.media.id}`}>{en ? 'Request a proposal for this campaign' : 'Pedir proposta para esta campanha'} ↗</a>
+        <p className="small-copy">{en ? 'Only the example reference or material type is carried over. Your file is not sent.' : 'Segue apenas a referência do exemplo ou o tipo de material. O ficheiro não é enviado.'}</p>
       </section>
-      <section className="tablet-stage" aria-label="Pré-visualização do tablet"><div className="tablet-stage-label"><span>TABLET CARTISE</span><span>VISTA INTERATIVA</span></div><TabletViewer controlsRef={controlsRef} media={media} resetPosition={resetPosition} paused={paused} onStatus={setStatus} onVideoState={setPaused} /><div className="tablet-status" role="status">{status}</div><div className="tablet-stage-footer"><span>Arraste o tablet ou a bolinha</span><div className="tablet-control-group"><RotationPad controlsRef={controlsRef} /><div className="tablet-views"><button onClick={() => setResetPosition((value) => value + 1)}>Repor posição</button></div></div></div></section>
+      <section className="tablet-stage" id="tablet-preview" aria-label={en ? 'Tablet preview' : 'Pré-visualização do tablet'}><div className="tablet-stage-label"><span>TABLET CARTISE</span><span>{en ? 'INTERACTIVE VIEW' : 'VISTA INTERATIVA'}</span></div><TabletViewer lang={lang} controlsRef={controlsRef} media={media || cycle.media} resetPosition={resetPosition} paused={media ? paused : !cycle.playing} onStatus={setStatus} onVideoState={setPaused} /><div className="tablet-status" role="status">{status}</div><div className="tablet-stage-footer"><span>{en ? 'Drag to rotate' : 'Arraste para rodar'}</span><div className="tablet-control-group"><RotationPad controlsRef={controlsRef} lang={lang} /><div className="tablet-views"><button onClick={() => setResetPosition(value => value + 1)}>{en ? 'Reset position' : 'Repor posição'}</button></div></div></div></section>
     </div>
-    <footer className="tablet-bottom"><span>UM NOVO PONTO DE CONTACTO.</span><span>Modelo baseado na fotografia · dimensões aproximadas</span></footer>
-  </main>;
+    <div className="tablet-bottom"><a href={pageLink('formats', lang)}>{en ? 'View formats and specifications ↗' : 'Ver formatos e especificações ↗'}</a><span>{en ? 'Illustrative model · approximate dimensions' : 'Modelo ilustrativo · dimensões aproximadas'}</span></div>
+  </div>;
 }

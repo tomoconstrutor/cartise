@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+import { sitePages } from "./scripts/site-pages.mjs";
+
 export default defineConfig({
   build: {
     outDir: "dist/client",
@@ -15,5 +17,5 @@ export default defineConfig({
       clientFiles: ["./src/main.jsx"],
     },
   },
-  plugins: [react()],
+  plugins: [react(), sitePages()],
 });

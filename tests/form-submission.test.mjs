@@ -64,7 +64,7 @@ test("submits to FormSubmit and resolves on success", async () => {
   payload.set("email", "test@example.com");
   const response = await submitLead(payload, async (url, options) => {
     request = { url, options };
-    return { ok: true, status: 200 };
+    return { ok: true, status: 200, json: async () => ({ success: "true" }) };
   });
 
   assert.equal(response.ok, true);
@@ -78,4 +78,18 @@ test("rejects failed FormSubmit responses", async () => {
     submitLead(new FormData(), async () => ({ ok: false, status: 500 })),
     /status 500/,
   );
+});
+
+
+test("rejects HTTP success when the service rejects delivery", async () => {
+  await assert.rejects(submitLead(new FormData(), async () => ({ ok: true, json: async () => ({ success: false }) })), /did not accept/);
+  await assert.rejects(submitLead(new FormData(), async () => ({ ok: true, json: async () => ({}) })), /did not accept/);
+});
+
+test("local success and failure never call the external service", async () => {
+  let calls = 0;
+  const fetcher = async () => { calls++; throw new Error('External call forbidden'); };
+  assert.equal((await submitLead(new FormData(), fetcher, { hostname: 'localhost' })).simulated, true);
+  await assert.rejects(submitLead(new FormData(), fetcher, { hostname: '127.0.0.1', simulation: 'error' }), /Simulated/);
+  assert.equal(calls, 0);
 });

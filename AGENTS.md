@@ -13,3 +13,19 @@ Provide a very small, understated rotation icon beside reset on both viewers: ti
 When implementing from a selected generated mock, treat that image as the source of truth for layout, component anatomy, density, spacing, color, typography, visible content, and hierarchy.
 
 Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts/prepare-sites-build.mjs`, and `tests/sites-worker.test.mjs` intact so the same local prototype can be handed to Sites. Before a Sites handoff, run `npm run build` and `npm run test:sites`; the build must leave `dist/client/index.html`, `dist/server/index.js`, and `dist/.openai/hosting.json`.
+
+SEO and commercial direction: Preserve the sober visual identity and the useful tablet demo. Explain digital advertising inside TVDE vehicles immediately; use dedicated PT/EN pages for solution, formats, coverage, fleets and contact. Keep fictional examples clearly labelled and distinguish studio settings from commercial specifications. Lisbon and Porto are currently active (confirmed by the user on 2026-09-07); other regions are enquiry-only. Metrics are available on enquiry: do not claim specific reporting capabilities or publish network results. Keep prices, targeting capabilities and fleet conditions subject to confirmation. Local form tests must simulate delivery without sending emails.
+
+User revisions (2026-09-07): Restore the original centered slogan hero with its wide passenger photograph below, and the photographic fleet section. Give demo and proposal CTAs strong prominence. Put the fleet enquiry form in the opening section, before any photo on mobile. Brand/agency proposals ask for vehicle-count ranges. Remove the measurement/reporting page and commercial sections. Use realistic photographic imagery (AI-generated where needed) rather than code-drawn scenes. Coverage and fleet pages include photography matching existing assets. Replace six demo creatives with edited horizontal Canva advertisement templates, keeping fictional examples labelled.
+Use the integrated Codex browser for Canva work and local previews, as requested by the user. The six current Canva examples are static images; preserve their complete artwork on the tablet rather than cropping text at the edges.
+City photography should evoke Lisbon, Porto or Portugal through everyday streets, local architecture, azulejos and paving, without monuments or famous landmarks.
+
+Tablet previews should adapt their proportions to the displayed artwork so the complete image is visible without cropping, stretching or black letterbox bars, on both the homepage and dedicated studio.
+
+The homepage fleet CTA should foreground earning more from the fleet, using “Quero ganhar mais com a minha frota”, while remuneration terms remain subject to confirmation.
+
+Commercial copy should lead with the offer and benefits, keeping confirmed conditions close to the decision. Keep the original hero and slogan. Avoid repeated demo disclaimers and sections about unavailable capabilities. Fleet messaging should continue the additional-revenue proposition, with audience-specific form actions. Studio specifications belong in the studio, not the commercial formats page.
+
+Keep the original edited Canva advertisements; the user prefers them over the simplified AI typography revisions. Privacy completion is deferred at the user’s request until legal entity details exist.
+
+Confirmed fleet terms: Cartise handles and pays for equipment installation, connectivity, maintenance and fault repairs; these services have no cost to the fleet. Remove the minimum-term/permanence FAQ in both languages; do not infer that no minimum term exists.

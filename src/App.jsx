@@ -1,275 +1,106 @@
-import { lazy, Suspense, useEffect, useState } from "react";
-import {
-  ArrowDown,
-  ArrowRight,
-  ArrowUpRight,
-  Check,
-  Globe,
-  List,
-  MapPin,
-  X,
-} from "@phosphor-icons/react";
-import { createLeadPayload, submitLead } from "./formSubmission.js";
+import { Component, lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { ArrowUpRight, List, X } from '@phosphor-icons/react';
+import { copy } from './content.js';
+import { pageLink, routeFor } from './routes.js';
+import { AdExamples, useAdCycle } from './AdExamples.jsx';
+import { LeadForm } from './LeadForm.jsx';
+import { track } from './analytics.js';
+import './tablet.css';
 
-const TabletShowcase = lazy(() => import('./TabletViewer.jsx').then((module) => ({ default: module.TabletShowcase })));
+const TabletShowcase = lazy(() => import('./TabletViewer.jsx').then(module => ({ default: module.TabletShowcase })));
+const TabletDemo = lazy(() => import('./TabletViewer.jsx'));
 
-const content = {
-  pt: {
-    nav: [["A solução", "solution"], ["Como funciona", "process"], ["Para marcas", "brands"], ["Motoristas", "drivers"]],
-    headerCta: "Pedir proposta",
-    eyebrow: "Publicidade em movimento · Portugal",
-    heroTitle: "Publicidade que viaja consigo.",
-    heroBody: "Transformamos veículos TVDE em espaços de publicidade para marcas que querem estar mais perto das pessoas.",
-    heroCta: "Pedir proposta",
-    heroSecondary: "Descobrir a Cartise",
-    heroCaption: "Um novo ponto de contacto, dentro de cada viagem.",
-    introKicker: "Um meio que já está em movimento",
-    introTitle: "Transformamos viagens em atenção.",
-    introBody: "Todos os dias, milhares de pessoas passam vários minutos dentro de veículos TVDE. A Cartise transforma esse tempo num novo espaço para marcas.",
-    introWords: ["Mais próximo.", "Mais presente.", "Em movimento."],
-    processKicker: "Simples, do briefing aos resultados",
-    processTitle: "Uma campanha. Milhares de viagens.",
-    steps: [
-      ["01", "Defina a campanha", "Escolha a cidade, duração, público e dimensão da campanha."],
-      ["02", "Nós tratamos do resto", "Distribuímos a campanha pela nossa rede de veículos e gerimos toda a operação."],
-      ["03", "Acompanhe os resultados", "Receba informação sobre a atividade e desempenho da sua campanha."],
-    ],
-    valueOverline: "Presença que se sente",
-    valueTitleA: "Outdoor passa por si.",
-    valueTitleB: "Cartise viaja consigo.",
-    values: [
-      ["Mais tempo", "A sua marca acompanha o passageiro durante a viagem."],
-      ["Mais atenção", "Um ambiente mais próximo e com menos distrações do que muitos formatos tradicionais."],
-      ["Mais cobertura", "Uma rede de veículos em circulação diária pelas zonas onde as pessoas vivem, trabalham e saem."],
-    ],
-    brandsKicker: "Para marcas e agências",
-    brandsTitle: "A sua marca. Dentro da viagem.",
-    brandsBody: "A Cartise cria um novo ponto de contacto entre marcas e passageiros. Campanhas podem ser adaptadas por localização, período, veículo e objetivo.",
-    range: ["Da notoriedade à aquisição.", "Da campanha nacional à ativação local."],
-    fitTitleA: "Feito para marcas.",
-    fitTitleB: "E para quem trabalha com elas.",
-    fitBody: "Trabalhamos diretamente com marcas, agências de publicidade e agências de media.",
-    fitQuestion: "Precisa de uma campanha específica?",
-    fitCta: "Falar com a Cartise",
-    driversKicker: "Rede Cartise",
-    driversTitle: "Conduz TVDE?",
-    driversBody: "O seu veículo pode fazer parte da rede Cartise. Disponibilize espaço publicitário no seu carro e receba por participar nas campanhas da nossa rede.",
-    driversAlt: "Sedan premium em movimento numa rua de Lisboa",
-    driversCta: "Quero aderir",
-    closing: "A próxima campanha pode começar numa viagem.",
-    closingSub: "Coloque a sua marca em movimento.",
-    footerLine: "Publicidade em movimento.",
-    formProposalTitle: "Vamos pôr a sua marca em movimento.",
-    formDriverTitle: "Junte-se à rede Cartise.",
-    formBody: "Deixe-nos os seus dados. A nossa equipa entrará em contacto consigo em breve.",
-    name: "Nome", email: "Email profissional", company: "Empresa", city: "Cidade", submit: "Enviar pedido",
-    sending: "A enviar…",
-    submitError: "Não foi possível enviar o pedido. Verifique a ligação e tente novamente.",
-    success: "Obrigado. Falamos em breve.",
-    successBody: "Recebemos o seu pedido e entraremos em contacto consigo.",
-    close: "Fechar",
-  },
-  en: {
-    nav: [["The solution", "solution"], ["How it works", "process"], ["For brands", "brands"], ["Drivers", "drivers"]],
-    headerCta: "Request a proposal",
-    eyebrow: "Advertising in motion · Portugal",
-    heroTitle: "Advertising that moves with you.",
-    heroBody: "We turn ride-hailing vehicles into advertising spaces for brands that want to get closer to people.",
-    heroCta: "Request a proposal",
-    heroSecondary: "Discover Cartise",
-    heroCaption: "A new brand touchpoint, inside every journey.",
-    introKicker: "A medium already in motion",
-    introTitle: "We turn journeys into attention.",
-    introBody: "Every day, thousands of people spend several minutes inside ride-hailing vehicles. Cartise turns that time into a new advertising space for brands.",
-    introWords: ["Closer.", "More present.", "Always moving."],
-    processKicker: "Simple, from brief to results",
-    processTitle: "One campaign. Thousands of journeys.",
-    steps: [
-      ["01", "Define your campaign", "Choose the city, campaign duration, audience and scale."],
-      ["02", "We handle the rest", "We distribute your campaign across our vehicle network and manage the operation."],
-      ["03", "Track the results", "Receive information about campaign activity and performance."],
-    ],
-    valueOverline: "Presence people can feel",
-    valueTitleA: "Outdoor advertising passes you by.",
-    valueTitleB: "Cartise travels with you.",
-    values: [
-      ["More time", "Your brand stays with the passenger throughout the journey."],
-      ["More attention", "A closer environment with fewer distractions than many traditional advertising formats."],
-      ["More coverage", "A network of vehicles moving daily through the places where people live, work and go out."],
-    ],
-    brandsKicker: "For brands and agencies",
-    brandsTitle: "Your brand. Inside the journey.",
-    brandsBody: "Cartise creates a new touchpoint between brands and passengers. Campaigns can be adapted by location, period, vehicle and objective.",
-    range: ["From awareness to acquisition.", "From national campaigns to local activations."],
-    fitTitleA: "Built for brands.",
-    fitTitleB: "And the agencies behind them.",
-    fitBody: "We work directly with brands, advertising agencies and media agencies.",
-    fitQuestion: "Need something specific?",
-    fitCta: "Talk to Cartise",
-    driversKicker: "Cartise network",
-    driversTitle: "Drive with TVDE platforms?",
-    driversBody: "Your vehicle can become part of the Cartise network. Make advertising space available inside your vehicle and earn by participating in campaigns across our network.",
-    driversAlt: "Premium sedan moving through a Lisbon street",
-    driversCta: "Join the network",
-    closing: "Your next campaign could start with a journey.",
-    closingSub: "Put your brand in motion.",
-    footerLine: "Advertising in motion.",
-    formProposalTitle: "Let’s put your brand in motion.",
-    formDriverTitle: "Join the Cartise network.",
-    formBody: "Leave your details and our team will get in touch shortly.",
-    name: "Name", email: "Work email", company: "Company", city: "City", submit: "Send request",
-    sending: "Sending…",
-    submitError: "We couldn’t send your request. Check your connection and try again.",
-    success: "Thank you. We’ll talk soon.",
-    successBody: "We’ve received your request and will be in touch.",
-    close: "Close",
-  },
-};
-
-function BrandMark() {
-  return <a className="brand-mark" href="#top" aria-label="Cartise — home">CARTISE</a>;
+class ViewerBoundary extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
 }
+function LinkButton({ href, children, light = false, ...props }) { return <a className={`solid-button${light ? ' solid-button--light' : ''}`} href={href} {...props}>{children}<ArrowUpRight size={18} aria-hidden="true" /></a>; }
+function SectionTitle({ label, children }) { return <><p className="eyebrow">{label}</p><h2>{children}</h2></>; }
+function Cards({ items }) { return <div className="info-grid">{items.map(([title, text], i) => <article className="info-card" key={title}><span className="card-number">0{i + 1}</span><h3>{title}</h3><p>{text}</p></article>)}</div>; }
+function FAQ({ items }) { return <div className="faq-list">{items.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div>; }
 
-function ArrowLink({ children, onClick }) {
-  return (
-    <button className="arrow-link" onClick={onClick} type="button">
-      <span>{children}</span><span className="arrow-link__icon" aria-hidden="true"><ArrowUpRight weight="bold" /></span>
-    </button>
-  );
-}
 
-function LeadModal({ type, copy, lang, onClose }) {
-  const [status, setStatus] = useState("idle");
+export function DemoSection({ lang }) {
+  const c = copy[lang];
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  const cycle = useAdCycle('brands');
   useEffect(() => {
-    const onKey = (event) => event.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    document.body.classList.add("modal-open");
-    return () => { document.removeEventListener("keydown", onKey); document.body.classList.remove("modal-open"); };
-  }, [onClose]);
-
-  return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
-      <div className="lead-modal" role="dialog" aria-modal="true" aria-labelledby="lead-title" onMouseDown={(event) => event.stopPropagation()}>
-        <button className="modal-close" type="button" onClick={onClose} aria-label={copy.close}><X size={20} /></button>
-        {status === "success" ? (
-          <div className="success-state">
-            <span className="success-icon"><Check size={26} weight="bold" /></span>
-            <p className="eyebrow">Cartise</p><h2 id="lead-title">{copy.success}</h2><p>{copy.successBody}</p>
-            <button className="solid-button" type="button" onClick={onClose}>{copy.close}</button>
-          </div>
-        ) : (
-          <>
-            <p className="eyebrow">Cartise · {type === "driver" ? copy.driversKicker : copy.brandsKicker}</p>
-            <h2 id="lead-title">{type === "driver" ? copy.formDriverTitle : copy.formProposalTitle}</h2>
-            <p className="modal-copy">{copy.formBody}</p>
-            <form onSubmit={async (event) => {
-              event.preventDefault();
-              setStatus("submitting");
-              try {
-                const payload = createLeadPayload(event.currentTarget, type, lang);
-                await submitLead(payload);
-                setStatus("success");
-              } catch {
-                setStatus("error");
-              }
-            }}>
-              <input className="honeypot" type="text" name="_honey" tabIndex="-1" autoComplete="off" aria-hidden="true" />
-              <label>{copy.name}<input name="name" autoFocus required /></label>
-              <label>{copy.email}<input name="email" type="email" required /></label>
-              <div className="form-row">
-                <label>{copy.company}<input name="company" required={type !== "driver"} /></label>
-                <label>{copy.city}<input name="city" required /></label>
-              </div>
-              {status === "error" && <p className="form-error" role="alert">{copy.submitError}</p>}
-              <button className="solid-button form-submit" type="submit" disabled={status === "submitting"}>
-                {status === "submitting" ? copy.sending : copy.submit}<ArrowRight size={18} weight="bold" />
-              </button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
-  );
+    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } }, { rootMargin: '180px' });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  const fallback = <div className="tablet-fallback"><img src={cycle.media.poster} alt={lang === 'en' ? 'Fictional ad preview' : 'Pré-visualização de anúncio fictício'} width="780" height="500" /><p>{lang === 'en' ? 'Image preview · open the studio for the interactive tablet.' : 'Pré-visualização de imagem · abra o estúdio para explorar o tablet.'}</p></div>;
+  return <section className="brands section" id="brands" ref={ref}>
+    <div className="brands-copy"><SectionTitle label={lang === 'en' ? '01 / Explore the medium' : '01 / Explore o meio'}>{c.demoTitle}</SectionTitle><p className="large-copy">{c.demoBody}</p><a className="brands-demo-link" data-track="demo_open" href={`${pageLink('tablet', lang)}?example=${cycle.media.id}`}>{c.demo}<ArrowUpRight size={24} /></a><AdExamples cycle={cycle} lang={lang} /><p className="small-copy">{c.demoNote}</p></div>
+    <ViewerBoundary fallback={fallback}>{visible ? <Suspense fallback={fallback}><TabletShowcase lang={lang} media={cycle.media} paused={!cycle.playing} /></Suspense> : fallback}</ViewerBoundary>
+  </section>;
 }
+function Coverage({ lang, detailed = false }) {
+  const c = copy[lang];
+  return <section className="section coverage-section">{detailed ? <><p className="eyebrow">{lang === 'en' ? 'Portugal / Coverage' : 'Portugal / Cobertura'}</p><h1>{c.coverageTitle}</h1></> : <SectionTitle label={lang === 'en' ? 'Portugal / Coverage' : 'Portugal / Cobertura'}>{c.coverageTitle}</SectionTitle>}<p className="large-copy section-intro">{c.coverageBody}</p><div className="city-grid">{['Lisboa', 'Porto', 'Algarve'].map((city, i) => <a key={city} href={`${pageLink('contact', lang)}?city=${city}`} className="city-card">{i < 2 && <img src={`/assets/cartise-${i === 0 ? "lisboa" : "porto"}.jpg`} alt={lang === "en" ? `Illustrative AI photograph of ${city}` : `Fotografia ilustrativa de ${city}, gerada com IA`} width="1536" height="1024" loading="lazy" />}<span className="city-index">PT / 0{i + 1}</span><h3>{lang === 'en' && city === 'Lisboa' ? 'Lisbon' : city}</h3><span>{i < 2 ? (lang === 'en' ? 'Active network · enquire about dates' : 'Rede ativa · consultar datas') : c.availability}<ArrowUpRight size={18} /></span></a>)}</div>{!detailed && <a className="text-button" href={pageLink('coverage', lang)}>{c.coverageLink}<ArrowUpRight size={16} /></a>}</section>;
+}
+function Closing({ lang, onProposal }) { const c = copy[lang]; return <section className="closing section"><p className="eyebrow">{c.signature}</p><h2>{c.closing}</h2><p>{c.closingBody}</p><LinkButton href={pageLink('contact', lang)} onClick={onProposal} light>{c.proposal}</LinkButton></section>; }
+function PageIntro({ label, title, children }) { return <section className="page-intro section"><p className="eyebrow">{label}</p><h1>{title}</h1><p className="large-copy">{children}</p></section>; }
 
-export function App() {
-  const [lang, setLang] = useState("pt");
+export function App({ pathname = '/' }) {
+  const route = routeFor(pathname);
+  const { key, lang } = route;
+  const c = copy[lang];
+  const en = lang === 'en';
   const [menuOpen, setMenuOpen] = useState(false);
   const [modal, setModal] = useState(null);
-  const copy = content[lang];
-
+  const [studioReady, setStudioReady] = useState(false);
+  const dialog = useRef(null);
+  const link = key => pageLink(key, lang);
   useEffect(() => {
-    document.documentElement.lang = lang;
-    document.title = lang === "pt" ? "Cartise — Publicidade em movimento" : "Cartise — Advertising in motion";
-  }, [lang]);
-
-  const openLead = (type = "proposal") => { setMenuOpen(false); setModal(type); };
-  const goTo = (id) => { setMenuOpen(false); document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); };
-
-  return (
-    <div className="site-shell" id="top">
-      <header className="header">
-        <BrandMark />
-        <nav className={menuOpen ? "nav nav--open" : "nav"} aria-label="Main navigation">
-          {copy.nav.map(([label, id]) => <button key={id} type="button" onClick={() => goTo(id)}>{label}</button>)}
-        </nav>
-        <div className="header-actions">
-          <div className="language-switch" aria-label="Language selector">
-            <Globe size={15} aria-hidden="true" />
-            {["pt", "en"].map((code) => <button key={code} type="button" aria-pressed={lang === code} className={lang === code ? "active" : ""} onClick={() => setLang(code)}>{code.toUpperCase()}</button>)}
-          </div>
-          <button className="header-cta" type="button" onClick={() => openLead()}>{copy.headerCta}<ArrowUpRight size={15} weight="bold" /></button>
-          <button className="menu-toggle" type="button" aria-expanded={menuOpen} aria-label="Toggle menu" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={22} /> : <List size={22} />}</button>
-        </div>
-      </header>
-
-      <main>
-        <section className="hero" aria-labelledby="hero-title">
-          <div className="hero-copy"><p className="eyebrow">{copy.eyebrow}</p><h1 id="hero-title">{copy.heroTitle}</h1><p className="hero-body">{copy.heroBody}</p>
-            <div className="hero-actions">
-              <button className="solid-button" type="button" onClick={() => openLead()}>{copy.heroCta}<ArrowUpRight size={18} weight="bold" /></button>
-              <button className="text-button" type="button" onClick={() => goTo("solution")}>{copy.heroSecondary}<ArrowDown size={16} weight="bold" /></button>
-            </div>
-          </div>
-          <div className="hero-media"><img src="/assets/cartise-hero-passengers.jpg" alt="Duas passageiras a interagir com um ecrã publicitário dentro de um veículo Cartise em Lisboa" /><div className="image-caption"><MapPin size={16} weight="fill" /><span>Lisboa · Portugal</span></div><p>{copy.heroCaption}</p></div>
-        </section>
-
-        <section className="intro section" id="solution">
-          <div className="section-label"><span>01</span><p>{copy.introKicker}</p></div>
-          <div className="intro-grid"><h2>{copy.introTitle}</h2><div><p className="large-copy">{copy.introBody}</p><div className="word-row">{copy.introWords.map((word, index) => <span key={word} className={index === 1 ? "accent-word" : ""}>{word}</span>)}</div></div></div>
-        </section>
-
-        <section className="process section" id="process">
-          <div className="section-label"><span>02</span><p>{copy.processKicker}</p></div><h2>{copy.processTitle}</h2>
-          <div className="step-grid">{copy.steps.map(([number, title, body], index) => <article className={`step-card step-card--${index + 1}`} key={number}><div className="step-top"><span>{number}</span><ArrowUpRight size={20} /></div><div><h3>{title}</h3><p>{body}</p></div></article>)}</div>
-        </section>
-
-        <section className="value section">
-          <div className="section-label section-label--light"><span>03</span><p>{copy.valueOverline}</p></div>
-          <div className="value-title"><h2>{copy.valueTitleA}</h2><h2>{copy.valueTitleB}</h2></div>
-          <div className="value-grid">{copy.values.map(([title, body], index) => <article key={title}><span className="value-index">0{index + 1}</span><h3>{title}</h3><p>{body}</p></article>)}</div>
-        </section>
-
-        <section className="brands section" id="brands">
-          <div className="brands-copy"><div className="section-label"><span>04</span><p>{copy.brandsKicker}</p></div><h2>{copy.brandsTitle}</h2><p className="large-copy">{copy.brandsBody}</p><a className="brands-demo-link" href="/tablet">{lang === "en" ? "See how your brand would look" : "Veja como ficaria a sua marca"}<ArrowUpRight size={18} aria-hidden="true" /></a></div>
-          <Suspense fallback={<div className="brand-range" aria-busy="true">CARTISE</div>}><TabletShowcase lang={lang} /></Suspense>
-        </section>
-
-        <section className="fit section">
-          <div className="fit-heading"><h2>{copy.fitTitleA}</h2><h2>{copy.fitTitleB}</h2></div>
-          <div className="fit-copy"><p className="large-copy">{copy.fitBody}</p><p className="fit-question">{copy.fitQuestion}</p><ArrowLink onClick={() => openLead()}>{copy.fitCta}</ArrowLink></div>
-        </section>
-
-        <section className="drivers section" id="drivers">
-          <div className="drivers-visual"><img src="/assets/cartise-drivers-premium.png" alt={copy.driversAlt} /></div>
-          <div className="drivers-copy"><p className="eyebrow">{copy.driversKicker}</p><h2>{copy.driversTitle}</h2><p className="large-copy">{copy.driversBody}</p><ArrowLink onClick={() => openLead("driver")}>{copy.driversCta}</ArrowLink></div>
-        </section>
-
-        <section className="closing section"><p className="eyebrow">Cartise · 2026</p><h2>{copy.closing}</h2><p>{copy.closingSub}</p><button className="solid-button solid-button--light" type="button" onClick={() => openLead()}>{copy.heroCta}<ArrowUpRight size={18} weight="bold" /></button></section>
-      </main>
-
-      <footer className="footer"><BrandMark /><p>{copy.footerLine}</p><div><a href="mailto:hello@cartise.pt">hello@cartise.pt</a><span>Portugal</span></div></footer>
-      {modal && <LeadModal type={modal} copy={copy} lang={lang} onClose={() => setModal(null)} />}
-    </div>
-  );
+    track('page_view');
+    if (key === 'tablet') setStudioReady(true);
+    function click(event) {
+      const target = event.target.closest?.('[data-track]');
+      if (target) track(target.dataset.track);
+    }
+    document.addEventListener('click', click);
+    return () => document.removeEventListener('click', click);
+  }, [key]);
+  useEffect(() => {
+    if (!modal) return;
+    const previous = document.activeElement;
+    dialog.current.showModal();
+    document.body.classList.add('modal-open');
+    return () => { document.body.classList.remove('modal-open'); previous?.focus(); };
+  }, [modal]);
+  function openProposal(event, type = 'proposal') {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault(); setMenuOpen(false); setModal(type); track('proposal_open', { audience: type === 'driver' ? 'fleet' : 'brand' });
+  }
+  const studioFallback = <section className="section"><h1>{en ? 'Your campaign on the tablet.' : 'A sua campanha no tablet.'}</h1><p>{en ? 'Interactive studio · fictional ads. Your files stay in the browser.' : 'Estúdio interativo · anúncios fictícios. Os seus ficheiros ficam no navegador.'}</p><img className="studio-poster" src="/ads/cafe.jpg" alt={en ? 'Fictional coffee campaign' : 'Campanha fictícia de café'} width="780" height="500" /><p><a href={link('contact')}>{c.proposal}</a></p></section>;
+  return <div className="site-shell" id="top">
+    <a className="skip-link" href="#main">{en ? 'Skip to content' : 'Saltar para o conteúdo'}</a>
+    <header className="header"><a className="brand-mark" href={link('home')} aria-label={en ? 'Cartise — home' : 'Cartise — início'}>CARTISE</a><nav id="navigation" className={menuOpen ? 'nav nav--open' : 'nav'} aria-label={en ? 'Main navigation' : 'Navegação principal'}>{['solution', 'formats', 'coverage', 'fleets'].map((item, i) => <a key={item} href={link(item)} aria-current={item === key ? 'page' : undefined}>{c.nav[i]}</a>)}</nav><div className="header-actions"><div className="language-switch" aria-label={en ? 'Language' : 'Idioma'}>{['pt', 'en'].map(locale => <a key={locale} href={pageLink(key, locale)} lang={locale} hrefLang={locale} aria-current={lang === locale ? 'true' : undefined}>{locale.toUpperCase()}</a>)}</div><a className="header-cta" href={key === 'fleets' ? '#fleet-form' : link('contact')} onClick={key === 'fleets' ? undefined : openProposal}>{key === 'fleets' ? (en ? 'Partnership terms' : 'Conhecer condições') : (en ? 'Request proposal' : 'Pedir proposta')}<ArrowUpRight size={15} /></a><button className="menu-toggle" aria-controls="navigation" aria-expanded={menuOpen} aria-label={menuOpen ? (en ? 'Close menu' : 'Fechar menu') : (en ? 'Open menu' : 'Abrir menu')} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={22} /> : <List size={22} />}</button></div></header>
+    {key !== 'home' && <nav className="breadcrumbs" aria-label={en ? 'Breadcrumb' : 'Percurso'}><a href={link('home')}>{en ? 'Home' : 'Início'}</a><span aria-hidden="true">/</span><span aria-current="page">{route.title[en ? 1 : 0]}</span></nav>}
+    <main id="main">
+      {key === 'home' && <>
+        <section className="hero"><div className="hero-copy"><p className="eyebrow">In-Car DOOH · Portugal</p><h1>{c.signature}</h1><p className="hero-body">{c.heroBody}</p><div className="hero-actions"><LinkButton href={link('contact')} onClick={openProposal}>{c.proposal}</LinkButton><a className="text-button" href={link('formats')}>{en ? 'Explore formats' : 'Conhecer os formatos'}<ArrowUpRight size={16} /></a></div></div><div className="hero-media"><img src="/assets/cartise-hero-passengers.jpg" alt={c.heroAlt} width="1536" height="1024" fetchPriority="high" /><span className="image-caption">{c.visualLabel}</span></div></section>
+        <DemoSection lang={lang} />
+        <section className="section process"><SectionTitle label={en ? '02 / How it works' : '02 / Como funciona'}>{c.processTitle}</SectionTitle><Cards items={c.steps} /><a className="text-button" href={link('solution')}>{c.learn}<ArrowUpRight size={16} /></a></section>
+        <Coverage lang={lang} />
+        <section className="section formats-section"><SectionTitle label={en ? '03 / Creative' : '03 / Criatividade'}>{c.formatTitle}</SectionTitle><Cards items={c.formats} /><a className="text-button" href={link('formats')}>{c.formatLink}<ArrowUpRight size={16} /></a></section>
+        <section className="section drivers"><div className="drivers-copy"><SectionTitle label={en ? '04 / The network' : '04 / A rede'}>{c.fleetTitle}</SectionTitle><p className="large-copy">{c.fleetBody}</p><LinkButton href={link('fleets')}>{c.fleetLink}</LinkButton><p className="small-copy">{c.driverLine}</p></div><div className="drivers-visual"><img src="/assets/cartise-drivers-premium.jpg" alt={en ? "Dark sedan on a Lisbon street, illustrative image" : "Sedan numa rua de Lisboa, imagem ilustrativa"} width="1123" height="1401" loading="lazy" /></div></section>
+        <section className="section"><SectionTitle label="FAQ">{c.faqTitle}</SectionTitle><FAQ items={c.faq} /></section>
+      </>}
+      {key === 'solution' && <><PageIntro label="In-Car DOOH" title={c.solutionTitle}>{c.solutionIntro}</PageIntro><section className="section compact-top"><Cards items={c.solutionCards} /></section><section className="section process"><SectionTitle label={en ? 'Campaign planning' : 'Planeamento da campanha'}>{c.processTitle}</SectionTitle><Cards items={c.steps} /></section><section className="section"><SectionTitle label={en ? 'Brands & agencies' : 'Marcas e agências'}>{c.audiencesTitle}</SectionTitle><Cards items={c.audiences} /></section><section className="section tinted"><SectionTitle label={en ? 'Investment' : 'Investimento'}>{c.costTitle}</SectionTitle><p className="large-copy section-intro">{c.costBody}</p><div className="inline-actions"><LinkButton href={link('formats')}>{c.formatLink}</LinkButton></div></section></>}
+      {key === 'formats' && <><PageIntro label={en ? 'Image / Video' : 'Imagem / Vídeo'} title={c.formatTitle}>{c.specsIntro}</PageIntro><section className="section compact-top"><Cards items={c.formats} /><a className="text-button" href={link('coverage')}>{c.coverageLink}<ArrowUpRight size={16} /></a></section><DemoSection lang={lang} /><section className="section tinted"><SectionTitle label={en ? 'Creative essentials' : 'Preparar a peça'}>{c.creativeTitle}</SectionTitle><Cards items={c.creative} /><div className="text-panel"><h3>{c.handoffTitle}</h3><p>{c.handoffBody}</p></div></section></>}
+      {key === 'coverage' && <><Coverage lang={lang} detailed /><section className="section"><SectionTitle label={en ? 'Your location' : 'A sua localização'}>{c.coverageOther}</SectionTitle><p className="large-copy">{c.coverageOtherBody}</p><LinkButton href={link('contact')}>{c.proposal}</LinkButton></section></>}
+      {key === 'fleets' && <><section className="section fleet-intro"><div className="fleet-intro-copy"><p className="eyebrow">{en ? 'Fleets / Individual drivers' : 'Frotas / Motoristas individuais'}</p><h1>{c.fleetTitle}</h1><p className="large-copy">{c.fleetIntro}</p></div><div className="fleet-form" id="fleet-form"><h2>{c.fleetCta}</h2><LeadForm lang={lang} initialType="driver" /></div><figure className="fleet-page-photo"><img src="/assets/cartise-drivers-premium.jpg" alt={en ? 'Illustrative photograph of a sedan in Lisbon' : 'Fotografia ilustrativa de um sedan em Lisboa'} width="1123" height="1401" /><figcaption>{c.visualLabel}</figcaption></figure></section><section className="section compact-top"><Cards items={c.fleetSteps} /></section><section className="section tinted"><SectionTitle label={en ? 'Partnership terms' : 'Condições da parceria'}>{en ? 'Know the terms before joining.' : 'Conheça as condições antes de aderir.'}</SectionTitle><FAQ items={c.fleetFaq} /></section></>}
+      {key === 'contact' && <><PageIntro label={en ? 'Let’s talk' : 'Vamos conversar'} title={c.contactTitle}>{c.contactIntro}</PageIntro><section className="section contact-layout compact-top"><div className="contact-aside"><h2>{c.nextTitle}</h2><p className="large-copy">{c.nextBody}</p><a className="contact-email" href="mailto:hello@cartise.pt">hello@cartise.pt ↗</a><a href={link('fleets')}>{c.fleetLink}</a></div><LeadForm lang={lang} /></section></>}
+      {key === 'privacy' && <><PageIntro label={en ? 'Information' : 'Informação'} title={c.privacyTitle}>{c.privacyIntro}</PageIntro><section className="section compact-top legal-copy">{c.privacySections.map(([title, text]) => <article key={title}><h2>{title}</h2><p>{text}</p></article>)}<a href="https://formsubmit.co/privacy.pdf" target="_blank" rel="noreferrer">{en ? 'FormSubmit privacy information ↗' : 'Informação de privacidade do FormSubmit ↗'}</a></section></>}
+      {key === 'tablet' && <ViewerBoundary fallback={studioFallback}>{studioReady ? <Suspense fallback={studioFallback}><TabletDemo lang={lang} /></Suspense> : studioFallback}</ViewerBoundary>}
+      {key === 'notFound' && <><PageIntro label="404" title={c.notFoundTitle}>{c.notFoundBody}</PageIntro><section className="section compact-top"><LinkButton href={link('home')}>{c.back}</LinkButton></section></>}
+      {!['contact', 'privacy', 'tablet', 'notFound', 'fleets'].includes(key) && <Closing lang={lang} onProposal={openProposal} />}
+    </main>
+    <footer className="footer"><div className="footer-brand"><a className="brand-mark" href={link('home')}>CARTISE</a><p>{c.signature}</p><span>{c.footerCompany}</span></div><nav aria-label={en ? 'Footer navigation' : 'Navegação de rodapé'}>{[['solution', c.nav[0]], ['formats', c.nav[1]], ['coverage', c.nav[2]], ['fleets', c.nav[3]], ['privacy', c.privacy]].map(([key, label]) => <a href={link(key)} key={key}>{label}</a>)}</nav><div className="footer-contact"><a href="mailto:hello@cartise.pt">hello@cartise.pt ↗</a><a href={link('contact')}>{c.contact}</a></div></footer>
+    {modal && <dialog className="lead-modal" ref={dialog} onCancel={() => setModal(null)} onClick={event => { if (event.target === dialog.current) { const r = dialog.current.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) setModal(null); } }} aria-labelledby="lead-title"><button className="modal-close" onClick={() => setModal(null)} aria-label={en ? 'Close' : 'Fechar'}><X size={20} /></button><p className="eyebrow">Cartise</p><h2 id="lead-title">{modal === 'driver' ? c.fleetCta : c.proposal}</h2><p className="modal-copy">{c.contactIntro}</p><LeadForm lang={lang} initialType={modal} /></dialog>}
+  </div>;
 }
