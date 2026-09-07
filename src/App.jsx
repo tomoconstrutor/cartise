@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
@@ -10,6 +10,8 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { createLeadPayload, submitLead } from "./formSubmission.js";
+
+const TabletShowcase = lazy(() => import('./TabletViewer.jsx').then((module) => ({ default: module.TabletShowcase })));
 
 const content = {
   pt: {
@@ -250,7 +252,7 @@ export function App() {
 
         <section className="brands section" id="brands">
           <div className="brands-copy"><div className="section-label"><span>04</span><p>{copy.brandsKicker}</p></div><h2>{copy.brandsTitle}</h2><p className="large-copy">{copy.brandsBody}</p></div>
-          <div className="brand-range"><p className="brand-range__mark">CARTISE</p><div>{copy.range.map((item) => <p key={item}>{item}</p>)}</div></div>
+          <Suspense fallback={<div className="brand-range" aria-busy="true">CARTISE</div>}><TabletShowcase lang={lang} /></Suspense>
         </section>
 
         <section className="fit section">
