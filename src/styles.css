@@ -209,3 +209,9 @@ h1 { margin: 20px auto 24px; max-width: 900px; font-size: clamp(54px, 7.1vw, 108
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+.brands-demo-link { display:flex; justify-content:space-between; align-items:center; gap:16px; width:100%; max-width:560px; margin-top:28px; padding:18px 22px; border-radius:999px; background:var(--ink); color:#fff; font-size:15px; font-weight:600; text-decoration:none; transition:background .2s; }
+.brands-demo-link:hover { background:#443857; }
+.brands-demo-link:focus-visible { outline:2px solid var(--violet); outline-offset:4px; }
+.brands-demo-link svg { flex-shrink:0; }
+@media(max-width:600px) { .brands-demo-link { min-height:54px; padding:16px 20px; font-size:13px; } }

@@ -251,7 +251,7 @@ export function App() {
         </section>
 
         <section className="brands section" id="brands">
-          <div className="brands-copy"><div className="section-label"><span>04</span><p>{copy.brandsKicker}</p></div><h2>{copy.brandsTitle}</h2><p className="large-copy">{copy.brandsBody}</p></div>
+          <div className="brands-copy"><div className="section-label"><span>04</span><p>{copy.brandsKicker}</p></div><h2>{copy.brandsTitle}</h2><p className="large-copy">{copy.brandsBody}</p><a className="brands-demo-link" href="/tablet">{lang === "en" ? "See how your brand would look" : "Veja como ficaria a sua marca"}<ArrowUpRight size={18} aria-hidden="true" /></a></div>
           <Suspense fallback={<div className="brand-range" aria-busy="true">CARTISE</div>}><TabletShowcase lang={lang} /></Suspense>
         </section>
 

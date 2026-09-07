@@ -8,7 +8,7 @@ Tablet interaction: Prioritize mobile layout and touch targets. Allow continuous
 
 Before making substantial visual changes, use the Product Design plugin's `get-context` skill when the visual source is unclear or no longer matches the current goal. When the user gives durable prototype-specific design feedback, preferences, or decisions, record them in `AGENTS.md`.
 
-Provide a very small, understated rotation icon beside reset on both viewers: tiny flat center dot and arrows, no large joystick styling. Align all four arrows symmetrically inside the circle using consistent vector shapes. Keep a comfortable invisible touch target. The homepage demo CTA should be prominent, with the Portuguese wording “Veja como ficaria a sua marca”.
+Provide a very small, understated rotation icon beside reset on both viewers: tiny flat center dot and arrows, no large joystick styling. Align all four arrows symmetrically inside the circle using consistent vector shapes. Keep a comfortable invisible touch target. The homepage demo CTA should be prominent, with the Portuguese wording “Veja como ficaria a sua marca”. Place it directly below the descriptive text in the left-hand brands column, outside the tablet card; keep it below the text on mobile as well.
 
 When implementing from a selected generated mock, treat that image as the source of truth for layout, component anatomy, density, spacing, color, typography, visible content, and hierarchy.
 

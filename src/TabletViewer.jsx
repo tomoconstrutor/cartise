@@ -243,7 +243,6 @@ export function TabletShowcase({ lang = 'pt' }) {
     <div className="tablet-stage-footer"><span>{en ? 'Drag the tablet or the ball' : 'Arraste o tablet ou a bolinha'}</span><div className="tablet-control-group"><RotationPad controlsRef={controlsRef} lang={lang} /><div className="tablet-views">
       <button onClick={() => setResetPosition((value) => value + 1)}>{en ? 'Reset position' : 'Repor posição'}</button>
     </div></div></div>
-    <a className="tablet-home-link" href="/tablet">{en ? 'See how your brand would look' : 'Veja como ficaria a sua marca'} <span aria-hidden="true">↗</span></a>
   </div>;
 }
 
