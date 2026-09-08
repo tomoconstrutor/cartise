@@ -237,7 +237,8 @@ textarea { resize:vertical; }
 .fleet-page-photo { margin:0; position:relative; height:350px; border-radius:16px; overflow:hidden; }
 .fleet-page-photo img { width:100%; height:100%; object-fit:cover; object-position:center 62%; }
 .fleet-page-photo figcaption { position:absolute; right:14px; bottom:14px; border-radius:20px; background:#f8f7f5ed; padding:7px 10px; font-size:10px; }
-.city-card img { display:block; width:100%; height:clamp(180px,22vw,320px); aspect-ratio:16 / 9; object-fit:contain; object-position:center; background:var(--lavender); border-radius:12px; margin:0 0 20px; }
+.city-card-media { display:block; width:100%; aspect-ratio:3 / 2; overflow:hidden; background:var(--lavender); border-radius:12px; margin:0 0 20px; }
+.city-card-media img { display:block; width:100%; height:100%; object-fit:cover; object-position:center; }
 @media(max-width:800px) {
   .hero { padding:36px 22px 22px; }
   .hero-copy { padding-bottom:24px; }
@@ -264,7 +265,7 @@ textarea { resize:vertical; }
   .fleet-form { padding:20px 16px; }
   .fleet-intro .large-copy { font-size:16px; margin-bottom:0; }
   .header-cta svg { display:none; }
-  .city-card img { height:180px; margin-bottom:18px; }
+  .city-card-media { margin-bottom:18px; }
 }
 
 .city-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }

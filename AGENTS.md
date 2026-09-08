@@ -18,7 +18,7 @@ SEO and commercial direction: Preserve the sober visual identity and the useful 
 
 User revisions (2026-09-07): Restore the original centered slogan hero with its wide passenger photograph below, and the photographic fleet section. Give demo and proposal CTAs strong prominence. Put the fleet enquiry form in the opening section, before any photo on mobile. Brand/agency proposals ask for vehicle-count ranges. Remove the measurement/reporting page and commercial sections. Use realistic photographic imagery (AI-generated where needed) rather than code-drawn scenes. Coverage and fleet pages include photography matching existing assets. Replace six demo creatives with edited horizontal Canva advertisement templates, keeping fictional examples labelled.
 Use the integrated Codex browser for Canva work and local previews, as requested by the user. The six current Canva examples are static images; preserve their complete artwork on the tablet rather than cropping text at the edges.
-City photography should evoke Lisbon, Porto or Portugal through everyday streets, local architecture, azulejos and paving, without monuments or famous landmarks.
+City photography should evoke Lisbon, Porto or Portugal through everyday streets, local architecture, azulejos and paving, without monuments or famous landmarks. Coverage city cards use a 3:2 horizontal image frame on mobile with no side bars; source photos should fill the frame without cropping when their source ratio matches.
 
 Tablet previews should adapt their proportions to the displayed artwork so the complete image is visible without cropping, stretching or black letterbox bars, on both the homepage and dedicated studio.
 
