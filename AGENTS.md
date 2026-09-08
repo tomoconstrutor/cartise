@@ -31,3 +31,5 @@ Keep the original edited Canva advertisements; the user prefers them over the si
 Confirmed fleet terms: Cartise handles and pays for equipment installation, connectivity, maintenance and fault repairs; these services have no cost to the fleet. Remove the minimum-term/permanence FAQ in both languages; do not infer that no minimum term exists.
 
 Mobile QA: keep form controls at least 16px, comfortable 44px touch targets, no horizontal overflow from 320px, studio specifications below the preview/upload flow, and the contact form before supporting copy on mobile.
+
+Current public phone contact: 928 406 723, displayed as a tel link in contact and footer and included in Organization structured data.

@@ -10,7 +10,7 @@ export function renderPage(template, pathname) {
   const title = route.title[en ? 1 : 0] + ' | Cartise';
   const description = route.description[en ? 1 : 0];
   const canonical = SITE_URL + route.path;
-  const schema = [{ '@context': 'https://schema.org', '@type': 'Organization', '@id': SITE_URL + '/#organization', name: 'Cartise', url: SITE_URL, email: 'hello@cartise.pt' }];
+  const schema = [{ '@context': 'https://schema.org', '@type': 'Organization', '@id': SITE_URL + '/#organization', name: 'Cartise', url: SITE_URL, email: 'hello@cartise.pt', telephone: '+351 928 406 723' }];
   if (route.key === 'home' || route.key === 'solution') schema.push({ '@context': 'https://schema.org', '@type': 'Service', name: 'Cartise In-Car DOOH', serviceType: en ? 'Digital advertising inside ride-hailing vehicles' : 'Publicidade digital dentro de veículos TVDE', provider: { '@id': SITE_URL + '/#organization' }, areaServed: [{ '@type': 'City', name: 'Lisboa' }, { '@type': 'City', name: 'Porto' }] });
   if (route.key !== 'home' && route.key !== 'notFound') schema.push({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: en ? 'Home' : 'Início', item: SITE_URL + pageLink('home', route.lang) }, { '@type': 'ListItem', position: 2, name: route.title[en ? 1 : 0], item: canonical }] });
   const head = `<title>${escape(title)}</title>
