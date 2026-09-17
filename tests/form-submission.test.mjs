@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   FORM_ENDPOINT,
+  MEDIA_KIT_URL,
   createLeadPayload,
   submitLead,
 } from "../src/formSubmission.js";
@@ -34,6 +35,19 @@ test("creates a differentiated campaign payload", () => {
   } finally {
     globalThis.FormData = OriginalFormData;
   }
+});
+
+test("creates a media-kit payload with an automatic download email", () => {
+  const input = formWith({ name: "Test User", email: "test@example.com" });
+  const form = { [Symbol.iterator]: input[Symbol.iterator].bind(input) };
+  const OriginalFormData = globalThis.FormData;
+  globalThis.FormData = class extends OriginalFormData { constructor(source) { super(); for (const [key, value] of source) this.set(key, value); } };
+  try {
+    const payload = createLeadPayload(form, "mediaKit", "pt");
+    assert.equal(payload.get("_subject"), "Cartise — Pedido de media kit");
+    assert.equal(payload.get("request_type"), "media_kit");
+    assert.match(payload.get("_autoresponse"), new RegExp(MEDIA_KIT_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  } finally { globalThis.FormData = OriginalFormData; }
 });
 
 test("creates a differentiated driver payload", () => {

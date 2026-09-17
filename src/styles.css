@@ -162,6 +162,13 @@ textarea { resize:vertical; }
 .legal-copy article { margin-bottom:40px; }
 .legal-copy h2 { font-size:28px; }
 .legal-copy p { color:var(--muted); }
+.media-kit-hero { display:grid; grid-template-columns:minmax(0,1fr) minmax(420px,.9fr); gap:7vw; align-items:center; min-height:calc(100vh - 150px); background:linear-gradient(135deg,#f8f7f5 0%,#ebe8f7 100%); }
+.media-kit-hero h1 { max-width:700px; }
+.media-kit-note { font-size:14px; color:var(--muted); margin-top:28px; }
+.media-kit-card { padding:34px; border-radius:20px; border:1px solid var(--line); background:#fffdfb; box-shadow:0 24px 80px #44329112; }
+.media-kit-card h2 { font-size:32px; }
+.media-kit-assurance { display:flex; justify-content:space-between; align-items:center; gap:28px; border-top:1px solid var(--line); padding-top:34px; padding-bottom:34px; }
+.media-kit-assurance p { margin:0; max-width:650px; color:var(--muted); }
 @media(min-width:1600px) { .header,.section,.hero,.footer,.breadcrumbs { padding-left:max(5vw,calc((100vw - 1460px)/2)); padding-right:max(5vw,calc((100vw - 1460px)/2)); } }
 @media(max-width:1050px) { .nav a { padding:12px 10px; } .header { gap:14px; } .header-actions { gap:8px; } .hero { gap:28px; } .hero h1 { font-size:52px; } .hero-body { font-size:16px; } .section { padding:65px 4vw; } .compact-top { padding-top:15px; } }
 @media(max-width:800px) {
@@ -178,6 +185,7 @@ textarea { resize:vertical; }
   .hero-body { max-width:650px; }
   .hero-actions { margin-top:20px; }
   .brands,.drivers,.contact-layout { grid-template-columns:1fr!important; gap:32px; }
+  .media-kit-hero { grid-template-columns:1fr; min-height:0; gap:38px; }
   .info-grid,.info-grid:has(> :last-child:nth-child(2)) { grid-template-columns:1fr; }
   .info-card { min-height:0; }
   .card-number { margin-bottom:22px; }
@@ -201,6 +209,8 @@ textarea { resize:vertical; }
   .hero .eyebrow { font-size:10px; }
   .form-row { grid-template-columns:1fr; }
   .lead-modal { padding:28px 20px; }
+  .media-kit-card { padding:22px 16px; }
+  .media-kit-assurance { display:block; }
   .lead-modal h2 { font-size:29px; }
   .footer { padding:35px 22px; grid-template-columns:1fr; gap:25px; }
   .footer-brand { grid-column:auto; }
